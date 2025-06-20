@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Infinite Concepts | Cosmic Concept Creator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #6c63ff;
+  --primary-light: #8a84ff;
+  --secondary: #ff6584;
+  --accent: #2ceaa3;
+  --dark-bg: #0f0c29;
+  --darker-bg: #0a081f;
+  --menu-bg: rgba(25, 22, 58, 0.85);
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --text-light: #ffffff;
+  --text-muted: #a0a0c0;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  display: flex;
+  height: 100vh;
+  background: var(--dark-bg);
+  color: var(--text-light);
+  overflow: hidden;
+  position: relative;
+}
+
+#app-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+#board {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#particles-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+#menu {
+  width: 260px;
+  background: var(--menu-bg);
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow);
+  z-index: 20;
+  transition: var(--transition);
+}
+
+#menu-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#menu-header h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  background: linear-gradient(to right, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+#menu-header p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+#search-container {
+  padding: 15px;
+  background: rgba(15, 12, 41, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#search-input {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-light);
+  transition: var(--transition);
+  font-family: 'Montserrat', sans-serif;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+}
+
+#search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+#concepts-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.concepts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+.concepts-count {
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.concepts-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.concept {
+  padding: 12px 15px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  cursor: grab;
+  user-select: none;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.concept:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.concept:active {
+  cursor: grabbing;
+}
+
+.concept.hidden {
+  display: none;
+}
+
+.concept .emoji {
+  font-size: 24px;
+  margin-right: 12px;
+  width: 32px;
+  text-align: center;
+}
+
+.concept .concept-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.concept.new {
+  animation: highlightPulse 2s ease;
+  border-left: 3px solid var(--accent);
+}
+
+@keyframes highlightPulse {
+  0% { background: rgba(44, 234, 163, 0.2); }
+  100% { background: var(--card-bg); }
+}
+
+.board-item {
+  position: absolute;
+  padding: 15px 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  cursor: grab;
+  user-select: none;
+  z-index: 1;
+  transition: var(--transition);
+  min-width: 100px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.board-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+}
+
+.board-item.dragging {
+  z-index: 1000;
+  transform: scale(1.1);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 0 2px var(--primary);
+  cursor: grabbing;
+}
+
+.board-item.combining {
+  background: rgba(255, 101, 132, 0.15);
+  border-color: var(--secondary);
+  box-shadow: 0 0 20px rgba(255, 101, 132, 0.3);
+  z-index: 500;
+}
+
+.board-item .emoji {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.board-item .concept-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.combine-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  box-shadow: 0 0 0 8px rgba(108, 99, 255, 0.3);
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition);
+}
+
+.combine-indicator.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.combination-effect {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(108, 99, 255, 0.8) 0%, rgba(108, 99, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 900;
+  opacity: 0;
+}
+
+@keyframes particleExplode {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-delay-1 { animation-delay: 0.5s; }
+.floating-delay-2 { animation-delay: 1s; }
+.floating-delay-3 { animation-delay: 1.5s; }
+.floating-delay-4 { animation-delay: 2s; }
+
+.tutorial {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(15, 12, 41, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 300px;
+  backdrop-filter: blur(5px);
+  z-index: 100;
+}
+
+.tutorial h3 {
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.tips {
+  list-style-type: none;
+}
+
+.tips li {
+  margin-bottom: 5px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.tips li::before {
+  content: "•";
+  color: var(--primary);
+  margin-right: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #app-container {
+    flex-direction: column;
+  }
+  
+  #menu {
+    width: 100%;
+    height: 40vh;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .tutorial {
+    display: none;
+  }
+}
+</style>
+</head>
+<body>
+<div id="particles-background"></div>
+<div id="app-container">
+  <div id="board">
+    <div class="tutorial">
+      <h3>How to use Infinite Concepts</h3>
+      <ul class="tips">
+        <li>Drag concepts from the menu onto the board</li>
+        <li>Overlap two concepts to combine them</li>
+        <li>Right-click to remove items from the board</li>
+        <li>Middle-click to duplicate items</li>
+        <li>Search for concepts in the menu</li>
+      </ul>
+    </div>
+  </div>
+  <div id="menu">
+    <div id="menu-header">
+      <h1>Infinite Concepts</h1>
+      <p>Drag concepts to combine and discover new ideas</p>
+    </div>
+    <div id="search-container">
+      <input type="text" id="search-input" placeholder="Search concepts..." />
+    </div>
+    <div id="concepts-container">
+      <div class="concepts-header">
+        <span>Available Concepts</span>
+        <span class="concepts-count">0</span>
+      </div>
+      <div class="concepts-list">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const startConcepts = ["fire", "water", "earth", "wind", "air", "metal", "magic", "wood", "stone", "steam", "dust"];
+const discoveredConcepts = new Set();
+const board = document.getElementById('board');
+const searchInput = document.getElementById('search-input');
+const conceptsContainer = document.querySelector('.concepts-list');
+const conceptsCount = document.querySelector('.concepts-count');
+
+// Emoji map for initial concepts
+const emojiMap = {
+  fire: "🔥",
+  water: "💧",
+  earth: "🌍",
+  wind: "🌬️",
+  air: "💨",
+  metal: "⛓️",
+  magic: "✨",
+  wood: "🪵",
+  stone: "🪨",
+  steam: "🚂",
+  dust: "💨"
+};
+
+// Create animated background
+function createParticleBackground() {
+  const canvas = document.createElement('canvas');
+  canvas.id = 'particles-canvas';
+  document.getElementById('particles-background').appendChild(canvas);
+  
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  
+  const particles = [];
+  const particleCount = 100;
+  
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 3 + 1,
+      speedX: (Math.random() - 0.5) * 0.2,
+      speedY: (Math.random() - 0.5) * 0.2,
+      color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`,
+      orbit: Math.random() * 100
+    });
+  }
+  
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    particles.forEach(particle => {
+      particle.x += particle.speedX;
+      particle.y += particle.speedY;
+      
+      // Wrap particles around the screen
+      if (particle.x > canvas.width) particle.x = 0;
+      if (particle.x < 0) particle.x = canvas.width;
+      if (particle.y > canvas.height) particle.y = 0;
+      if (particle.y < 0) particle.y = canvas.height;
+      
+      // Draw particle
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fillStyle = particle.color;
+      ctx.fill();
+    });
+    
+    requestAnimationFrame(animateParticles);
+  }
+  
+  animateParticles();
+  
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+}
+
+// Add search functionality
+searchInput.addEventListener('input', filterConcepts);
+
+function filterConcepts() {
+  const searchTerm = searchInput.value.toLowerCase();
+  const concepts = conceptsContainer.querySelectorAll('.concept');
+  
+  concepts.forEach(concept => {
+    const conceptText = concept.dataset.concept.toLowerCase();
+    if (conceptText.includes(searchTerm)) {
+      concept.classList.remove('hidden');
+    } else {
+      concept.classList.add('hidden');
+    }
+  });
+}
+
+let dragEl = null;
+let offsetX = 0;
+let offsetY = 0;
+let dragFromMenu = false;
+const combineIndicator = document.createElement('div');
+combineIndicator.className = 'combine-indicator';
+combineIndicator.innerHTML = '+';
+document.body.appendChild(combineIndicator);
+
+function gaussianRandom(mean = 0, stdev = 1) {
+  const u = 1 - Math.random();
+  const v = Math.random();
+  const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  return z * stdev + mean;
+}
+
+function getRandomBoardPosition() {
+  const boardRect = board.getBoundingClientRect();
+  const centerX = boardRect.width / 2;
+  const centerY = boardRect.height / 2;
+  
+  const x = Math.max(10, Math.min(boardRect.width - 100, centerX + gaussianRandom(0, 100)));
+  const y = Math.max(10, Math.min(boardRect.height - 50, centerY + gaussianRandom(0, 80)));
+  
+  return { x, y };
+}
+
+function startDragFromMenu(e) {
+  if (e.button !== 0) return; // only left click
+  e.preventDefault();
+
+  const target = e.target.closest('.concept');
+  if (!target) return;
+
+  // Get concept and emoji from dataset
+  const concept = target.dataset.concept;
+  const emoji = target.dataset.emoji || '';
+
+  // Create new board item with both concept and emoji
+  dragEl = createBoardItem(concept, emoji);
+
+  // Remove floating animation classes for smooth drag
+  dragEl.classList.remove('floating');
+  for (let i = 1; i <= 4; i++) {
+    dragEl.classList.remove(`floating-delay-${i}`);
+  }
+
+  // Position it at mouse location initially
+  const boardRect = board.getBoundingClientRect();
+  const initialX = e.clientX - boardRect.left - 30; // Offset to center under mouse
+  const initialY = e.clientY - boardRect.top - 15;
+
+  dragEl.style.left = Math.max(0, initialX) + 'px';
+  dragEl.style.top = Math.max(0, initialY) + 'px';
+  board.appendChild(dragEl);
+
+  dragFromMenu = true;
+  offsetX = 30; // Center the drag offset
+  offsetY = 15;
+
+  dragEl.classList.add('dragging');
+  document.addEventListener('mousemove', moveAt);
+  document.addEventListener('mouseup', endDrag);
+  document.body.style.userSelect = 'none';
+}
+
+function startDragFromBoard(e) {
+  if (e.button !== 0) return; // only left click
+  e.preventDefault();
+
+  dragEl = e.target.closest('.board-item');
+  if (!dragEl) return;
+
+  // Remove floating animation classes for smooth drag
+  dragEl.classList.remove('floating');
+  for (let i = 1; i <= 4; i++) {
+    dragEl.classList.remove(`floating-delay-${i}`);
+  }
+
+  dragFromMenu = false;
+
+  const rect = dragEl.getBoundingClientRect();
+  const boardRect = board.getBoundingClientRect();
+  offsetX = e.clientX - rect.left;
+  offsetY = e.clientY - rect.top;
+
+  dragEl.classList.add('dragging');
+  document.addEventListener('mousemove', moveAt);
+  document.addEventListener('mouseup', endDrag);
+  document.body.style.userSelect = 'none';
+}
+
+function moveAt(e) {
+  if (!dragEl) return;
+  
+  const boardRect = board.getBoundingClientRect();
+  const newX = e.clientX - boardRect.left - offsetX;
+  const newY = e.clientY - boardRect.top - offsetY;
+  
+  dragEl.style.left = Math.max(0, Math.min(boardRect.width - dragEl.offsetWidth, newX)) + 'px';
+  dragEl.style.top = Math.max(0, Math.min(boardRect.height - dragEl.offsetHeight, newY)) + 'px';
+  
+  // Check for potential combinations and highlight
+  checkPotentialCombos();
+}
+
+function endDrag(e) {
+  document.removeEventListener('mousemove', moveAt);
+  document.removeEventListener('mouseup', endDrag);
+  document.body.style.userSelect = '';
+  
+  if (dragEl) {
+    dragEl.classList.remove('dragging');
+    clearCombiningHighlights();
+    combineIndicator.classList.remove('visible');
+    setTimeout(() => checkCombos(), 100); // Small delay to ensure position is set
+  }
+  
+  dragEl = null;
+  dragFromMenu = false;
+}
+
+function addConceptToMenu(concept, emoji) {
+  if (discoveredConcepts.has(concept)) return;
+
+  discoveredConcepts.add(concept);
+  
+  const el = document.createElement('div');
+  el.className = 'concept new';
+  el.dataset.concept = concept;
+  el.dataset.emoji = emoji;
+  
+  el.innerHTML = `
+    <span class="emoji">${emoji}</span>
+    <span class="concept-name">${concept}</span>
+  `;
+  
+  el.addEventListener('mousedown', startDragFromMenu);
+  conceptsContainer.prepend(el);
+  
+  // Update concept count
+  conceptsCount.textContent = discoveredConcepts.size;
+  
+  // Remove new class after animation completes
+  setTimeout(() => {
+    el.classList.remove('new');
+  }, 2000);
+}
+
+function createBoardItem(concept, emoji = '') {
+  const el = document.createElement('div');
+  el.className = 'board-item floating';
+  el.dataset.concept = concept;
+  
+  // Apply floating animation with random delay
+  const delayClass = `floating-delay-${Math.floor(Math.random() * 4) + 1}`;
+  el.classList.add(delayClass);
+  
+  el.innerHTML = `
+    <div class="emoji">${emoji}</div>
+    <div class="concept-name">${concept}</div>
+  `;
+  
+  el.addEventListener('mousedown', startDragFromBoard);
+  el.addEventListener('contextmenu', e => { 
+    e.preventDefault(); 
+    createExplosionEffect(el);
+    setTimeout(() => el.remove(), 300);
+  });
+  
+  el.addEventListener('mousedown', e => {
+    if (e.button === 1) { // Middle mouse button
+      e.preventDefault();
+      const pos = getRandomBoardPosition();
+      const clone = createBoardItem(concept, emoji);
+      clone.style.left = pos.x + 'px';
+      clone.style.top = pos.y + 'px';
+      board.appendChild(clone);
+    }
+  });
+  
+  return el;
+}
+
+function createExplosionEffect(element) {
+  const rect = element.getBoundingClientRect();
+  const effect = document.createElement('div');
+  effect.className = 'combination-effect';
+  effect.style.left = `${rect.left + rect.width/2}px`;
+  effect.style.top = `${rect.top + rect.height/2}px`;
+  document.body.appendChild(effect);
+  
+  // Animate
+  effect.animate([
+    { transform: 'scale(0)', opacity: 0.8 },
+    { transform: 'scale(2)', opacity: 0 }
+  ], {
+    duration: 500,
+    easing: 'ease-out'
+  });
+  
+  setTimeout(() => effect.remove(), 500);
+}
+
+function overlap(a, b) {
+  if (a === b) return false;
+  const r1 = a.getBoundingClientRect();
+  const r2 = b.getBoundingClientRect();
+  const threshold = 30; // pixels of overlap required
+  return !(r1.right < r2.left + threshold || 
+           r1.left > r2.right - threshold || 
+           r1.bottom < r2.top + threshold || 
+           r1.top > r2.bottom - threshold);
+}
+
+function clearCombiningHighlights() {
+  document.querySelectorAll('.board-item').forEach(item => {
+    item.classList.remove('combining');
+  });
+}
+
+function checkPotentialCombos() {
+  if (!dragEl) return;
+  
+  clearCombiningHighlights();
+  combineIndicator.classList.remove('visible');
+  
+  let foundCombo = false;
+  const items = Array.from(board.children);
+  for (let item of items) {
+    if (item !== dragEl && overlap(dragEl, item)) {
+      dragEl.classList.add('combining');
+      item.classList.add('combining');
+      foundCombo = true;
+      
+      // Position combine indicator between items
+      const dragRect = dragEl.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      
+      const centerX = (dragRect.left + dragRect.right + itemRect.left + itemRect.right) / 4;
+      const centerY = (dragRect.top + dragRect.bottom + itemRect.top + itemRect.bottom) / 4;
+      
+      combineIndicator.style.left = `${centerX}px`;
+      combineIndicator.style.top = `${centerY}px`;
+      combineIndicator.classList.add('visible');
+      
+      break;
+    }
+  }
+  
+  return foundCombo;
+}
+
+function checkCombos() {
+  const items = Array.from(board.children);
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      if (overlap(items[i], items[j])) {
+        combine(items[i], items[j]);
+        return;
+      }
+    }
+  }
+}
+
+async function getCombinationResult(a, b) {
+  try {
+    const response = await fetch('/combine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ a, b })
+    });
+    
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Server combination error:', data.error);
+      throw new Error(data.error || 'No combination from server');
+    }
+    
+    return { concept: data.result, emoji: data.emoji };
+  } catch (e) {
+    console.error('Failed to get combination:', e);
+    return { concept: a + " + " + b, emoji: "✨" };
+  }
+}
+
+async function combine(aEl, bEl) {
+  createExplosionEffect(aEl);
+  createExplosionEffect(bEl);
+
+  const rectA = aEl.getBoundingClientRect();
+  const rectB = bEl.getBoundingClientRect();
+  const centerX = (rectA.left + rectA.right + rectB.left + rectB.right) / 4;
+  const centerY = (rectA.top + rectA.bottom + rectB.top + rectB.bottom) / 4;
+
+  // Fetch real combination from backend
+  const aConcept = aEl.dataset.concept;
+  const bConcept = bEl.dataset.concept;
+  const { concept, emoji } = await getCombinationResult(aConcept, bConcept);
+
+  setTimeout(() => {
+    const newEl = createBoardItem(concept, emoji);
+    newEl.style.opacity = '0';
+    newEl.style.transform = 'scale(0)';
+    newEl.style.left = `${centerX - 50}px`;
+    newEl.style.top = `${centerY - 50}px`;
+    board.appendChild(newEl);
+
+    setTimeout(() => {
+      newEl.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      newEl.style.opacity = '1';
+      newEl.style.transform = 'scale(1)';
+    }, 50);
+
+    if (!discoveredConcepts.has(concept)) {
+      addConceptToMenu(concept, emoji);
+    }
+
+    aEl.remove();
+    bEl.remove();
+  }, 300);
+}
+
+// Initialize the app
+function initApp() {
+  // Create background
+  createParticleBackground();
+
+  // Add initial concepts to menu only
+  startConcepts.forEach(c => {
+    const emoji = emojiMap[c] || "✨";
+    addConceptToMenu(c, emoji);
+  });
+}
+
+// Start the app
+initApp();
+</script>
+</body>
+</html>
